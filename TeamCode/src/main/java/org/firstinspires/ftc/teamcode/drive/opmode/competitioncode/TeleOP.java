@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.drive.opmode.competitioncode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
@@ -9,18 +10,23 @@ import org.firstinspires.ftc.teamcode.drive.hardware.Robot;
 
 import java.util.List;
 
+// Tu = 147.67
+// Ku = 60
+// P: 36
+// I: 0.4876
+// D: 664.515
+
 @TeleOp(name = "TeleOp", group = "Teleop")
 public class TeleOP extends LinearOpMode {
     
-    final int       SLOW_CAROUSEL_TIME      = 1000;
-    final double    SLOW_CAROUSEL_SPEED     = 0.3;
-    final int       FAST_CAROUSEL_TIME      = 7000;
+    final double    SLOW_CAROUSEL_TIME      = 1.3;
+    final double    SLOW_CAROUSEL_SPEED     = 0.35;
+    final double    FAST_CAROUSEL_TIME      = 0.5;
     final double    FAST_CAROUSEL_SPEED     = 1.0;
+    final double    FINAL_CAROUSEL_TIME     = 0.5;
 
     Robot robot = new Robot();   //Uses heavily modified untested hardware
-    static ElapsedTime runtime = new ElapsedTime();
-    boolean inverted = false;
-    
+
     ElapsedTime carouselTimer = new ElapsedTime();
 
     int carouselState;
@@ -34,10 +40,6 @@ public class TeleOP extends LinearOpMode {
          */
         robot.init(hardwareMap);
 
-        //robot.armLeft.setPower(1);
-        //robot.armRight.setPower(1);
-        //robot.carouselSpinner  .setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-
         // Send telemetry message to signify robot waiting;
         telemetry.addData("Say", "Press Start to Begin");    //
         telemetry.update();
@@ -47,7 +49,7 @@ public class TeleOP extends LinearOpMode {
         if(opModeIsActive()) {
             while (opModeIsActive()) {
                 opLoop();
-                displayTelemetry();
+                robot.displayTelemetry(telemetry);
                 // Pace this loop so jaw action is reasonable speed.
                 sleep(25);
             }
@@ -64,6 +66,8 @@ public class TeleOP extends LinearOpMode {
 
         } else if (gamepad2.right_trigger > 0) {
             robot.intake.intake();
+        } else {
+            robot.intake.stop();
         }
 
         if (gamepad2.a) {
@@ -91,7 +95,7 @@ public class TeleOP extends LinearOpMode {
         switch (carouselState) {
             case 0:
                 robot.carousel.setPower(0);
-                if (gamepad1.left_trigger > 0) {
+                if (gamepad1.right_stick_button) {
                     robot.carousel.setPower(SLOW_CAROUSEL_SPEED);
                     carouselState = 1;
                     carouselTimer.reset();
@@ -101,27 +105,23 @@ public class TeleOP extends LinearOpMode {
                 if (carouselTimer.time() > SLOW_CAROUSEL_TIME) {
                     robot.carousel.setPower(FAST_CAROUSEL_SPEED);
                     carouselState = 2;
+                    carouselTimer.reset();
                 }
                 break;
             case 2:
                 if (carouselTimer.time() > FAST_CAROUSEL_TIME) {
+                    carouselState = 3;
+                    carouselTimer.reset();
+                }
+                break;
+            case 3:
+                robot.carousel.setPower(0);
+                if (carouselTimer.time() > FINAL_CAROUSEL_TIME) {
                     carouselState = 0;
+                    carouselTimer.reset();
                 }
                 break;
         }
 
-    }
-
-    public void displayTelemetry() {
-        final List<Double> wheelLocations = robot.driveTrain.getWheelPositions();
-        telemetry.addLine("Wheel position")
-                .addData("Front Left", -wheelLocations.get(0))
-                .addData("Front Right", -wheelLocations.get(1))
-                .addData("Back Left", -wheelLocations.get(2))
-                .addData("Back Right", -wheelLocations.get(3));
-        telemetry.addLine("Arm")
-                .addData("Target Level", robot.arm.getTargetLevel())
-                .addData("Encoder Position", robot.arm.getCurrentPosition());
-        telemetry.update();
     }
 }

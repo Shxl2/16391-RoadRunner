@@ -46,13 +46,13 @@ public class Intake {
     }
 
     public void intake() {
-        leftMotor.setPower(INTAKE_POWER);
-        rightMotor.setPower(INTAKE_POWER);
+        leftMotor.setPower(-INTAKE_POWER);
+        rightMotor.setPower(-INTAKE_POWER);
     }
 
     public void outtake() {
-        leftMotor.setPower(OUTTAKE_POWER);
-        rightMotor.setPower(OUTTAKE_POWER);
+        leftMotor.setPower(-OUTTAKE_POWER);
+        rightMotor.setPower(-OUTTAKE_POWER);
     }
 
 
